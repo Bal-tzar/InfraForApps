@@ -44,16 +44,16 @@ Change these in `variables.local.yaml`:
 
 ```yaml
 app:
-  name: "paytrackr"              # Your app name
-  docker_image: "paytrackr"      # Your Docker image
+  name: "your-app"              # Your app name
+  docker_image: "your-image"      # Your Docker image
   docker_tag: "latest"           # Docker image tag
 
 azure:
-  resource_group: "paytrackr-rg" # Unique name
+  resource_group: "your-rg" # Unique name
   region: "westeurope"           # Your region
 
 kubernetes:
-  namespace: "paytrackr"         # K8s namespace
+  namespace: "your-namespace"         # K8s namespace
 ```
 
 ### Step 3: Set Database Password
@@ -77,8 +77,8 @@ Type `yes` when asked.
 ```bash
 # Get kubectl credentials
 az aks get-credentials \
-  --resource-group paytrackr-rg \
-  --name paytrackr-aks
+  --resource-group your-rg \
+  --name your-app-aks
 
 # Deploy to Kubernetes
 kubectl apply -f ../k8s/namespace.yaml
@@ -92,10 +92,10 @@ kubectl apply -f ../k8s/service.yaml
 
 ```bash
 # See your pods
-kubectl get pods -n paytrackr
+kubectl get pods -n your-namespace
 
 # Get the website URL
-kubectl get svc paytrackr-service -n paytrackr
+kubectl get svc your-app-service -n your-namespace
 
 # Look for the EXTERNAL-IP - that's your app URL!
 ```
@@ -104,7 +104,7 @@ Open in browser: `http://EXTERNAL-IP`
 
 ## Using for a Different App
 
-### Option 1: Use Variables File (Recommended)
+### Use Variables File
 
 ```bash
 cp variables.local.yaml.example variables.local.yaml
@@ -132,7 +132,7 @@ cd terraform
 terraform apply
 ```
 
-### Option 2: Manual Changes
+### Manual Changes
 
 If your app needs more resources, edit `k8s/deployment.yaml`:
 
@@ -151,14 +151,14 @@ resources:
 ### View Prometheus (Metrics)
 
 ```bash
-kubectl port-forward -n paytrackr svc/prometheus-service 9090:9090
+kubectl port-forward -n your-namespace svc/prometheus-service 9090:9090
 # Open http://localhost:9090
 ```
 
 ### View Grafana (Dashboards)
 
 ```bash
-kubectl port-forward -n paytrackr svc/grafana-service 3000:3000
+kubectl port-forward -n your-namespace svc/grafana-service 3000:3000
 # Open http://localhost:3000
 # Login: admin / admin
 ```
@@ -169,22 +169,22 @@ kubectl port-forward -n paytrackr svc/grafana-service 3000:3000
 
 ```bash
 # Check pod status
-kubectl describe pod -n paytrackr -l app=paytrackr
+kubectl describe pod -n your-namespace -l app=your-app
 
 # Check logs
-kubectl logs -n paytrackr deployment/paytrackr
+kubectl logs -n your-namespace deployment/your-app
 ```
 
 ### Can't Connect to Database?
 
 ```bash
 # Check if secret is correct
-kubectl get secret -n paytrackr paytrackr-secrets -o yaml
+kubectl get secret -n your-namespace your-app-secrets -o yaml
 
 # Test connection
-kubectl run -n paytrackr test-db --image=postgres:15-alpine -it -- \
+kubectl run -n your-namespace test-db --image=postgres:15-alpine -it -- \
   psql -h paytrackr-db.postgres.database.azure.com \
-  -U otto -d paytrackr
+  -U your-username -d your-directory
 ```
 
 ### Terraform Errors?
@@ -197,17 +197,6 @@ terraform validate
 TF_LOG=DEBUG terraform apply
 ```
 
-## Sharing with Your Team
-
-Just share this repo. Each person:
-
-1. Clones it
-2. Copies `variables.local.yaml.example` → `variables.local.yaml`
-3. Edits with their own values
-4. Sets `TF_VAR_postgres_admin_password`
-5. Runs `terraform apply`
-
-Each person deploys to their own Azure subscription - **your data stays safe!**
 
 ## Common Tasks
 
@@ -218,26 +207,26 @@ Each person deploys to their own Azure subscription - **your data stays safe!**
 docker push myregistry/my-app:v2.0.0
 
 # Update K8s
-kubectl set image deployment/paytrackr \
+kubectl set image deployment/your-app \
   paytrackr=myregistry/my-app:v2.0.0 \
-  -n paytrackr
+  -n your-namespace
 ```
 
 ### Scale Up/Down
 
 ```bash
 # More replicas
-kubectl scale deployment paytrackr -n paytrackr --replicas=5
+kubectl scale deployment your-app -n your-namespace --replicas=5
 
 # Fewer replicas
-kubectl scale deployment paytrackr -n paytrackr --replicas=1
+kubectl scale deployment your-app -n your-namespace --replicas=1
 ```
 
 ### Check Costs
 
 ```bash
 az vm list-usage --output table
-az postgresql server show --resource-group paytrackr-rg --name paytrackr-db
+az postgresql server show --resource-group your-rg --name your-db
 ```
 
 ### Delete Everything (Stop Charges)
@@ -282,8 +271,8 @@ openssl rand -base64 32
 
 # Update in Azure
 az postgres server update \
-  --resource-group paytrackr-rg \
-  --name paytrackr-db \
+  --resource-group your-rg \
+  --name your-db \
   --admin-user-password "new-password"
 ```
 
@@ -291,8 +280,8 @@ az postgres server update \
 
 ## Need Help?
 
-1. Check logs: `kubectl logs -n paytrackr deployment/paytrackr`
-2. Check pod details: `kubectl describe pod -n paytrackr <pod-name>`
+1. Check logs: `kubectl logs -n paytrackr deployment/your-app-name`
+2. Check pod details: `kubectl describe pod -n your-namespace <pod-name>`
 3. Read [Kubernetes Docs](https://kubernetes.io/docs)
 4. Read [Azure Docs](https://docs.microsoft.com/azure)
 
@@ -307,7 +296,7 @@ az postgres server update \
 
 ## License
 
-[Add your license]
+
 
 ---
 
