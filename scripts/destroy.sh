@@ -4,6 +4,6 @@
 
 POSTGRES_PASSWORD="otto"
 
-cd /home/otto/Documents/Projects/Examensarbete/PaytrackR/PaytrackR/Terraform
+cd ../terraform/
 
 terraform destroy -var="postgres_admin_password=${POSTGRES_PASSWORD}" -auto-approve

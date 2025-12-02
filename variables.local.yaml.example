@@ -1,0 +1,80 @@
+# LOCAL CONFIGURATION - Copy to variables.local.yaml and customize
+# NOTE: variables.local.yaml is in .gitignore - NEVER commit sensitive data
+
+# ============================================================================
+# HOW TO USE THIS FILE:
+# 1. Copy this file: cp variables.local.yaml.example variables.local.yaml
+# 2. Customize the values below for your specific deployment
+# 3. For sensitive values, use environment variables instead (see README)
+# ============================================================================
+
+# Application Configuration - CUSTOMIZE FOR YOUR APP
+app:
+  name: "paytrackr"                    # Change to your app name
+  description: "Worker shift management system"
+  docker_registry: "baltzar1994"       # Your Docker registry username/org
+  docker_image: "paytrackr"            # Your Docker image name
+  docker_tag: "latest"                 # Docker image tag
+  port: 8080                           # Application port
+
+# Azure Configuration - CUSTOMIZE FOR YOUR ENVIRONMENT
+azure:
+  region: "westeurope"                 # Change to your region (e.g., eastus, uksouth)
+  resource_group: "paytrackr-rg"       # Unique resource group name
+  environment: "production"            # production, staging, development
+
+# AKS Cluster Configuration
+aks:
+  cluster_name: "paytrackr-aks"        # Unique cluster name
+  kubernetes_version: "1.33"           # Kubernetes version
+  node_count: 3                        # Initial number of nodes
+  node_vm_size: "Standard_B2s"         # VM size for nodes
+  enable_autoscaling: true
+  min_node_count: 3
+  max_node_count: 5
+
+# Kubernetes Configuration
+kubernetes:
+  namespace: "paytrackr"               # Kubernetes namespace
+  app_replicas: 2                      # Number of app replicas
+  enable_monitoring: true              # Enable Prometheus/Grafana
+  enable_logging: true                 # Enable application logging
+
+# PostgreSQL Configuration
+postgres:
+  server_name: "paytrackr-db"          # Unique PostgreSQL server name
+  admin_username: "otto"               # PostgreSQL admin user
+  database_name: "paytrackr"           # Database name
+  sku: "B_Standard_B1ms"               # Azure PostgreSQL SKU
+  storage_gb: 32
+  backup_retention_days: 7
+  geo_redundant_backup: false
+
+# Application Environment Variables
+app_config:
+  aspnetcore_environment: "Production"
+  aspnetcore_urls: "http://+:8080"
+  timezone: "Europe/Stockholm"         # Change to your timezone
+  log_level: "Information"
+
+# PostgreSQL Deployment in K8s (for dev/test environments)
+postgres_deployment:
+  enabled: false                       # Set to true to deploy PostgreSQL in K8s
+  replicas: 1
+  storage_size: "5Gi"
+  port: 5432
+
+# Monitoring Configuration
+monitoring:
+  prometheus_enabled: true
+  prometheus_retention_days: 7
+  grafana_enabled: true
+  grafana_admin_password: "admin"      # Change this!
+
+# Common Tags
+tags:
+  project: "paytrackr"                 # Your project name
+  managed_by: "terraform"
+  environment: "production"
+  cost_center: "operations"            # Your cost center
+  team: "infrastructure"               # Your team name

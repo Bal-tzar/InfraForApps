@@ -2,8 +2,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: paytrackr-config
-  namespace: paytrackr
+  namespace: paytrackr  # kubernetes.namespace
+  labels:
+    app: paytrackr
 data:
-  ASPNETCORE_ENVIRONMENT: "Production"
-  ASPNETCORE_URLS: "http://+:8080"
-  TZ: "Europe/Stockholm"
+  ASPNETCORE_ENVIRONMENT: "Production"           # app_config.aspnetcore_environment
+  ASPNETCORE_URLS: "http://+:8080"               # app_config.aspnetcore_urls
+  TZ: "Europe/Stockholm"                         # app_config.timezone
+  LOG_LEVEL: "Information"                       # app_config.log_level
+  APP_NAME: "paytrackr"                          # app.name

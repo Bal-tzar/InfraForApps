@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
-  namespace: paytrackr
+  namespace: paytrackr  # kubernetes.namespace
   labels:
     app: prometheus
 spec:
@@ -19,55 +19,53 @@ spec:
       containers:
       - name: prometheus
         image: prom/prometheus:latest
-        args:
-          - '--config.file=/etc/prometheus/prometheus.yml'
-          - '--storage.tsdb.path=/prometheus'
-          - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-          - '--web.console.templates=/usr/share/prometheus/consoles'
         ports:
         - containerPort: 9090
           name: web
+        args:
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--storage.tsdb.path=/prometheus'
+          - '--storage.tsdb.retention.time=7d'  # monitoring.prometheus_retention_days
         volumeMounts:
-        - name: prometheus-config
+        - name: config
           mountPath: /etc/prometheus
-        - name: prometheus-storage
+        - name: storage
           mountPath: /prometheus
         resources:
           requests:
             memory: "512Mi"
-            cpu: "250m"
+            cpu: "500m"
           limits:
             memory: "1Gi"
-            cpu: "500m"
+            cpu: "1000m"
       volumes:
-      - name: prometheus-config
+      - name: config
         configMap:
           name: prometheus-config
-      - name: prometheus-storage
+      - name: storage
         emptyDir: {}
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: prometheus-service
-  namespace: paytrackr
-  labels:
-    app: prometheus
+  namespace: paytrackr  # kubernetes.namespace
 spec:
   type: ClusterIP
   ports:
   - port: 9090
     targetPort: 9090
-    protocol: TCP
-    name: web
   selector:
     app: prometheus
+
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus
-  namespace: paytrackr
+  namespace: paytrackr  # kubernetes.namespace
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -87,6 +85,7 @@ rules:
   resources:
   - ingresses
   verbs: ["get", "list", "watch"]
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -99,4 +98,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: prometheus
-  namespace: paytrackr
+  namespace: paytrackr  # kubernetes.namespace

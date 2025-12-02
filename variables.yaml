@@ -1,0 +1,73 @@
+# Master Variables File - Centralized configuration for Terraform and Kubernetes
+# This is the default configuration for PayTrackR. Customize via variables.local.yaml
+
+# Application Configuration
+app:
+  name: "paytrackr"
+  description: "Worker shift management system with PostgreSQL backend"
+  docker_registry: "baltzar1994"
+  docker_image: "paytrackr"
+  docker_tag: "latest"
+  port: 8080
+
+# Azure Configuration
+azure:
+  region: "westeurope"
+  resource_group: "paytrackr-rg"
+  environment: "production"
+
+# AKS Cluster Configuration
+aks:
+  cluster_name: "paytrackr-aks"
+  kubernetes_version: "1.33"
+  node_count: 3
+  node_vm_size: "Standard_B2s"
+  enable_autoscaling: true
+  min_node_count: 3
+  max_node_count: 5
+
+# Kubernetes Configuration
+kubernetes:
+  namespace: "paytrackr"
+  app_replicas: 2
+  enable_monitoring: true
+  enable_logging: true
+
+# PostgreSQL Configuration
+postgres:
+  server_name: "paytrackr-db"
+  admin_username: "otto"
+  database_name: "paytrackr"
+  sku: "B_Standard_B1ms"
+  storage_gb: 32
+  backup_retention_days: 7
+  geo_redundant_backup: false
+
+# Application Configuration (Secrets & Env Vars)
+app_config:
+  aspnetcore_environment: "Production"
+  aspnetcore_urls: "http://+:8080"
+  timezone: "Europe/Stockholm"
+  log_level: "Information"
+
+# Postgres Deployment (for local development or testing)
+postgres_deployment:
+  enabled: false  # Set to true if deploying PostgreSQL to K8s instead of Azure
+  replicas: 1
+  storage_size: "5Gi"
+  port: 5432
+
+# Monitoring Configuration
+monitoring:
+  prometheus_enabled: true
+  prometheus_retention_days: 7
+  grafana_enabled: true
+  grafana_admin_password: "admin"
+
+# Common Tags for all Azure resources
+tags:
+  project: "paytrackr"
+  managed_by: "terraform"
+  environment: "production"
+  cost_center: "operations"
+  team: "infrastructure"
