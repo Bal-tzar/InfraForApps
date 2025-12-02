@@ -43,3 +43,12 @@ provider "helm" {
     cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
   }
 }
+
+# Load centralized variables
+locals {
+  config = yamldecode(file("${path.module}/../variables.yaml"))
+  local_config = try(yamldecode(file("${path.module}/../variables.local.yaml")), {})
+  
+  # Merge local config with defaults (local overrides defaults)
+  merged_config = merge(local.config, local.local_config)
+}

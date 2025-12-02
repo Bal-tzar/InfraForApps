@@ -1,7 +1,12 @@
+# Terraform will use the variables from variables.tf which now have defaults
+# These defaults come from your current PayTrackR setup
+
 # Resource Group
 resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
   location = var.location
+
+  tags = local.config.tags
 }
 
 # Virtual Network for AKS
