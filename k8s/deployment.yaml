@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paytrackr
+  namespace: paytrackr
+  labels:
+    app: paytrackr
+spec:
+  replicas: 2  # Reduced from 3 for faster rollouts
+  selector:
+    matchLabels:
+      app: paytrackr
+  template:
+    metadata:
+      labels:
+        app: paytrackr
+      annotations:
+        prometheus.io/scrape: "true"     
+        prometheus.io/path: "/metrics"   
+        prometheus.io/port: "8080"   
+    spec:
+      containers:
+      - name: paytrackr
+        image: baltzar1994/paytrackr:latest
+        imagePullPolicy: Always  # Always pull latest image
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: paytrackr-secrets
+              key: ConnectionStrings__DefaultConnection
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
