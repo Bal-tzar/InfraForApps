@@ -3,15 +3,15 @@
 
 # Resource Group
 resource "azurerm_resource_group" "rg" {
-  name     = var.resource_group_name
+  name     = local.effective_resource_group_name
   location = var.location
 
-  tags = local.config.tags
+  tags = local.tags
 }
 
 # Virtual Network for AKS
 resource "azurerm_virtual_network" "vnet" {
-  name                = "${var.cluster_name}-vnet"
+  name                = "${local.effective_cluster_name}-vnet"
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -43,10 +43,10 @@ resource "azurerm_subnet" "postgres_subnet" {
 
 # AKS Cluster
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = var.cluster_name
+  name                = local.effective_cluster_name
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  dns_prefix          = var.cluster_name
+  dns_prefix          = local.effective_cluster_name
   kubernetes_version  = var.kubernetes_version
 
   default_node_pool {
@@ -67,15 +67,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
     dns_service_ip     = "10.1.0.10"
   }
 
-  tags = {
-    Environment = "Production"
-    Project     = "PaytrackR"
-  }
+  tags = local.tags
 }
 
 # PostgreSQL Flexible Server
 resource "azurerm_private_dns_zone" "postgres" {
-  name                = "paytrackr.postgres.database.azure.com"
+  name                = local.postgres_private_dns_zone
   resource_group_name = azurerm_resource_group.rg.name
 }
 
@@ -87,7 +84,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
 }
 
 resource "azurerm_postgresql_flexible_server" "postgres" {
-  name                   = "${var.cluster_name}-postgres"
+  name                   = "${local.effective_cluster_name}-postgres"
   resource_group_name    = azurerm_resource_group.rg.name
   location               = azurerm_resource_group.rg.location
   version                = "16"
@@ -107,7 +104,7 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
 }
 
 resource "azurerm_postgresql_flexible_server_database" "db" {
-  name      = var.postgres_database_name
+  name      = local.effective_postgres_database_name
   server_id = azurerm_postgresql_flexible_server.postgres.id
   collation = "en_US.utf8"
   charset   = "utf8"
@@ -121,7 +118,7 @@ data "azurerm_client_config" "current" {}
 
 # Key Vault
 resource "azurerm_key_vault" "kv" {
-  name                       = "${var.cluster_name}-kv"
+  name                       = "${local.effective_cluster_name}-kv"
   location                   = azurerm_resource_group.rg.location
   resource_group_name        = azurerm_resource_group.rg.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
@@ -150,6 +147,6 @@ resource "azurerm_key_vault" "kv" {
 # Store PostgreSQL connection string in Key Vault
 resource "azurerm_key_vault_secret" "postgres_connection" {
   name         = "postgres-connection-string"
-  value        = "Host=${azurerm_postgresql_flexible_server.postgres.fqdn};Database=${var.postgres_database_name};Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=Require"
+  value        = "Host=${azurerm_postgresql_flexible_server.postgres.fqdn};Database=${local.effective_postgres_database_name};Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=Require"
   key_vault_id = azurerm_key_vault.kv.id
 }

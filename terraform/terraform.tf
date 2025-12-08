@@ -51,4 +51,23 @@ locals {
   
   # Merge local config with defaults (local overrides defaults)
   merged_config = merge(local.config, local.local_config)
+
+  # Naming derived from a single app_name for reuse across projects
+  name_prefix = var.app_name
+  effective_resource_group_name     = coalesce(var.resource_group_name, "${local.name_prefix}-rg")
+  effective_cluster_name            = coalesce(var.cluster_name,        "${local.name_prefix}-aks")
+  effective_app_namespace           = coalesce(var.app_namespace,       local.name_prefix)
+  effective_postgres_database_name  = coalesce(var.postgres_database_name, local.name_prefix)
+
+  # Common tags merged with any YAML-provided tags (use lowercase keys to avoid Azure case-insensitive duplicates)
+  tags = merge(
+    try(local.merged_config.tags, {}),
+    {
+      project     = local.name_prefix
+      environment = var.environment
+    }
+  )
+
+  # Postgres private DNS zone name (kept consistent with prior convention)
+  postgres_private_dns_zone = "${local.name_prefix}.postgres.database.azure.com"
 }
