@@ -1,3 +1,4 @@
+```mermaid
 flowchart TD
 
     subgraph Azure["Azure Subscription"]
@@ -30,3 +31,4 @@ flowchart TD
     App --> KV
 
     KV -->|"Secret: postgres-connection-string"| App
+```
