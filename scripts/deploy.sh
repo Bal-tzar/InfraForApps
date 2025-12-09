@@ -8,7 +8,7 @@ cd ../terraform
 
 terraform init
 terraform apply -var="postgres_admin_password=${POSTGRES_PASSWORD}" -auto-approve
-#sleep 10m
+
 
 az aks get-credentials --resource-group paytrackr-rg --name paytrackr-aks --overwrite-existing
 
