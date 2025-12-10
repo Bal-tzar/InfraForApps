@@ -13,10 +13,9 @@ This setup automatically creates:
 ## Before You Start
 
 You need:
-1. `az` command (Azure CLI) - [Install here](https://docs.microsoft.com/cli/azure/install-azure-cli)
-2. `kubectl` - [Install here](https://kubernetes.io/docs/tasks/tools/)
-3. `terraform` - [Install here](https://www.terraform.io/downloads)
-4. A Docker image (e.g., `baltzar1994/paytrackr:latest`)
+1. `kubectl` - [Install here](https://kubernetes.io/docs/tasks/tools/)
+2. `terraform` - [Install here](https://www.terraform.io/downloads)
+3. A Docker image (e.g., `baltzar1994/paytrackr:latest`)
 
 ## Quick Setup (Windows PowerShell)
 
