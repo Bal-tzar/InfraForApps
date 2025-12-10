@@ -1,6 +1,6 @@
-# PayTrackR Infrastructure as Code
+# InfraForApps: Reusable Azure Stack
 
-Deploy PayTrackR (or any app) to Azure with Kubernetes in minutes.
+Deploy PayTrackR (or any app) to Azure with a reusable Terraform setup. Change a couple variables and reuse for multiple projects.
 
 ## What This Does
 
@@ -18,42 +18,35 @@ You need:
 3. `terraform` - [Install here](https://www.terraform.io/downloads)
 4. A Docker image (e.g., `baltzar1994/paytrackr:latest`)
 
-## Quick Setup (5 Steps)
+## Quick Setup (Windows PowerShell)
 
 ### Step 1: Login to Azure
 
-```bash
+```powershell
 az login
 az account set --subscription "YOUR_SUBSCRIPTION_ID"
 ```
 
 ### Step 2: Clone & Configure
 
-```bash
+```powershell
 git clone https://github.com/Bal-tzar/InfraForApps.git
-cd InfraForApps
+cd InfraForApps\InfraForApps\terraform
 
-# Copy example config
-cp variables.local.yaml.example variables.local.yaml
-
-# Edit with your app details
-nano variables.local.yaml
+# Create project variables
+Copy-Item .\terraform.tfvars.example .\terraform.tfvars
+notepad .\terraform.tfvars
 ```
 
-Change these in `variables.local.yaml`:
+Set at minimum:
 
-```yaml
-app:
-  name: "your-app"              # Your app name
-  docker_image: "your-image"      # Your Docker image
-  docker_tag: "latest"           # Docker image tag
-
-azure:
-  resource_group: "your-rg" # Unique name
-  region: "westeurope"           # Your region
-
-kubernetes:
-  namespace: "your-namespace"         # K8s namespace
+```hcl
+app_name                = "myapp"
+location                = "westeurope"
+environment             = "production"
+docker_image            = "dockerhubuser/myapp:latest"
+postgres_admin_username = "dbadmin"
+postgres_admin_password = "REPLACE_ME"
 ```
 
 ### Step 3: Set Database Password
@@ -64,28 +57,24 @@ export TF_VAR_postgres_admin_password="YourSecurePassword123!"
 
 ### Step 4: Deploy Infrastructure
 
-```bash
-cd terraform
+```powershell
 terraform init
+terraform plan
 terraform apply
 ```
 
-Type `yes` when asked.
-
 ### Step 5: Deploy Your App
 
-```bash
-# Get kubectl credentials
-az aks get-credentials \
-  --resource-group your-rg \
-  --name your-app-aks
+```powershell
+# Get kubectl credentials (values come from outputs)
+az aks get-credentials --resource-group <app_name>-rg --name <app_name>-aks
 
 # Deploy to Kubernetes
-kubectl apply -f ../k8s/namespace.yaml
-kubectl apply -f ../k8s/secret.yaml
-kubectl apply -f ../k8s/configmap.yaml
-kubectl apply -f ../k8s/deployment.yaml
-kubectl apply -f ../k8s/service.yaml
+kubectl apply -f ..\k8s\namespace.yaml
+kubectl apply -f ..\k8s\secret.yaml
+kubectl apply -f ..\k8s\configmap.yaml
+kubectl apply -f ..\k8s\deployment.yaml
+kubectl apply -f ..\k8s\service.yaml
 ```
 
 ## Check if It's Working
@@ -102,35 +91,16 @@ kubectl get svc your-app-service -n your-namespace
 
 Open in browser: `http://EXTERNAL-IP`
 
-## Using for a Different App
+## Reuse Across Apps
 
-### Use Variables File
-
-```bash
-cp variables.local.yaml.example variables.local.yaml
-```
-
-Edit `variables.local.yaml` with your app info:
-
-```yaml
-app:
-  name: "my-app"
-  docker_registry: "myregistry"
-  docker_image: "my-app"
-  docker_tag: "v1.0.0"
-  port: 5000                    # Change if needed
-
-kubernetes:
-  namespace: "my-app"
-  app_replicas: 3
-```
-
-Then re-deploy:
-
-```bash
-cd terraform
-terraform apply
-```
+- Change `app_name` (and image/credentials) in `terraform.tfvars` and re-run `terraform apply`.
+- Resource names derive automatically:
+  - Resource Group: `<app_name>-rg`
+  - AKS: `<app_name>-aks`
+  - VNet: `<app_name>-aks-vnet`
+  - Postgres: `<app_name>-aks-postgres` + private DNS `<app_name>.postgres.database.azure.com`
+  - Key Vault: `<app_name>-aks-kv`
+- Optional overrides: you can explicitly set `resource_group_name`, `cluster_name`, `app_namespace`, `postgres_database_name` in `terraform.tfvars` if you prefer custom names.
 
 ### Manual Changes
 
@@ -150,14 +120,14 @@ resources:
 
 ### View Prometheus (Metrics)
 
-```bash
+```powershell
 kubectl port-forward -n your-namespace svc/prometheus-service 9090:9090
 # Open http://localhost:9090
 ```
 
 ### View Grafana (Dashboards)
 
-```bash
+```powershell
 kubectl port-forward -n your-namespace svc/grafana-service 3000:3000
 # Open http://localhost:3000
 # Login: admin / admin
@@ -187,14 +157,11 @@ kubectl run -n your-namespace test-db --image=postgres:15-alpine -it -- \
   -U your-username -d your-directory
 ```
 
-### Terraform Errors?
+### Terraform Tips
 
-```bash
-# Validate
+```powershell
 terraform validate
-
-# Try again with debug info
-TF_LOG=DEBUG terraform apply
+terraform plan
 ```
 
 
@@ -231,12 +198,54 @@ az postgresql server show --resource-group your-rg --name your-db
 
 ### Delete Everything (Stop Charges)
 
-```bash
-cd terraform
+```powershell
+cd .\terraform
 terraform destroy
 ```
 
-Type `yes` to confirm.
+## Reuse Across Apps (Simplest)
+
+If you want to reuse the same Terraform for different projects by only changing a couple of values, use `terraform.tfvars` with the new `app_name`:
+
+1) Copy the example and edit values
+
+```powershell
+Copy-Item .\terraform\terraform.tfvars.example .\terraform\terraform.tfvars
+notepad .\terraform\terraform.tfvars
+```
+
+Suggested minimal values:
+
+```hcl
+app_name                = "myapp"
+location                = "westeurope"
+environment             = "production"
+docker_image            = "dockerhubuser/myapp:latest"
+postgres_admin_username = "dbadmin"
+postgres_admin_password = "REPLACE_ME"
+```
+
+2) Apply with Terraform
+
+```powershell
+cd .\terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+Notes:
+- Resource names (resource group, AKS, Key Vault, DB name) derive from `app_name` unless you override them.
+- You can still override `resource_group_name`, `cluster_name`, `app_namespace`, or `postgres_database_name` in `terraform.tfvars` if needed.
+- On Windows PowerShell, to set an environment variable directly use: `$env:TF_VAR_postgres_admin_password = "YourSecurePassword123!"`
+
+## What Terraform Creates
+
+- Azure Resource Group, VNet, and subnets (AKS + Postgres).
+- AKS cluster with a system-assigned identity.
+- Azure PostgreSQL Flexible Server (private, VNet-integrated) and one database named from `app_name`.
+- Private DNS zone for Postgres: `<app_name>.postgres.database.azure.com` + VNet link.
+- Azure Key Vault storing `postgres-connection-string`.
 
 ## File Structure
 
@@ -247,7 +256,9 @@ Type `yes` to confirm.
 ├── terraform/                      # Infrastructure code
 │   ├── terraform.tf
 │   ├── variables.tf
-│   └── resource.tf
+│   ├── resource.tf
+│   ├── outputs.tf
+│   └── terraform.tfvars.example
 └── k8s/                            # Kubernetes files
     ├── namespace.yaml
     ├── deployment.yaml
@@ -285,19 +296,6 @@ az postgres server update \
 3. Read [Kubernetes Docs](https://kubernetes.io/docs)
 4. Read [Azure Docs](https://docs.microsoft.com/azure)
 
-## What Gets Created
-
-| Resource | Cost | Notes |
-|----------|------|-------|
-| AKS Cluster | ~$70/month | 3 nodes, autoscaling |
-| PostgreSQL | ~$40/month | 32GB storage |
-| Storage | ~$5/month | Logs, monitoring |
-| **Total** | **~$115/month** | Can be reduced |
-
-## License
-
-
-
 ---
 
-**Last Updated:** December 2, 2025
+**Last Updated:** December 9, 2025
